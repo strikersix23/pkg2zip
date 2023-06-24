@@ -251,7 +251,7 @@ static const char* get_region(const char* id) {
              memcmp(id, "PCSD", 4) == 0 || memcmp(id, "PCSH", 4) == 0 || // PSV ASA
              memcmp(id, "UCAS", 4) == 0 || memcmp(id, "ULAS", 4) == 0 || // PSP ASA
              memcmp(id, "NPHG", 4) == 0 || memcmp(id, "NPHH", 4) == 0 || // PSP ASA
-             memcmp(id, "NPHZ", 4) == 0) { // PSP ASA
+             memcmp(id, "NPHZ", 4) == 0 || // PSP ASA
              memcmp(id, "NPQA", 4) == 0) { // PSM ASA
         return "ASA";
     }
