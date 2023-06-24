@@ -242,12 +242,16 @@ static const char* get_region(const char* id) {
     if (memcmp(id, "NPEE", 4) == 0 || memcmp(id, "NPEF", 4) == 0 || // PS1 EUR
         memcmp(id, "PCSB", 4) == 0 || memcmp(id, "PCSF", 4) == 0 || // PSV EUR
         memcmp(id, "UCES", 4) == 0 || memcmp(id, "ULES", 4) == 0 || // PSP EUR
+        memcmp(id, "NPEG", 4) == 0 || memcmp(id, "NPEH", 4) == 0 || // PSP EUR
+        memcmp(id, "NPEX", 4) == 0 || memcmp(id, "NPEZ", 4) == 0 || // PSP EUR
         memcmp(id, "NPOA", 4) == 0) { // PSM EUR
         return "EUR";
     }
     else if (memcmp(id, "NPHI", 4) == 0 || memcmp(id, "NPHJ", 4) == 0 || // PS1 ASA
              memcmp(id, "PCSD", 4) == 0 || memcmp(id, "PCSH", 4) == 0 || // PSV ASA
              memcmp(id, "UCAS", 4) == 0 || memcmp(id, "ULAS", 4) == 0 || // PSP ASA
+             memcmp(id, "NPHG", 4) == 0 || memcmp(id, "NPHH", 4) == 0 || // PSP ASA
+             memcmp(id, "NPHZ", 4) == 0) { // PSP ASA
              memcmp(id, "NPQA", 4) == 0) { // PSM ASA
         return "ASA";
     }
@@ -255,15 +259,18 @@ static const char* get_region(const char* id) {
              memcmp(id, "PCSC", 4) == 0 || memcmp(id, "PCSG", 4) == 0 || // PSV JPN
              memcmp(id, "UCJM", 4) == 0 || memcmp(id, "ULJM", 4) == 0 || // PSP JPN
              memcmp(id, "UCJS", 4) == 0 || memcmp(id, "ULJS", 4) == 0 || // PSP JPN
-             memcmp(id, "UCJB", 4) == 0 || // PSP JPN
+             memcmp(id, "UCJB", 4) == 0 || memcmp(id, "NPJG", 4) == 0 || // PSP JPN
+             memcmp(id, "NPJH", 4) == 0 || memcmp(id, "NPJJ", 4) == 0 || // PSP JPN
              memcmp(id, "NPPA", 4) == 0) { // PSM JPN
         return "JPN";
     }
-    else if (memcmp(id, "NPUF", 4) == 0 || // PS1 USA
-             memcmp(id, "NPUI", 4) == 0 || memcmp(id, "NPUJ", 4) == 0 || // PS1 USA
+    else if (memcmp(id, "NPUF", 4) == 0 || memcmp(id, "NPUI", 4) == 0 || // PS1 USA
+             memcmp(id, "NPUJ", 4) == 0 || // PS1 USA
              memcmp(id, "PCSA", 4) == 0 || memcmp(id, "PCSE", 4) == 0 || // PSV USA
              memcmp(id, "UCUS", 4) == 0 || memcmp(id, "ULUS", 4) == 0 || // PSP USA
-             memcmp(id, "NPUH", 4) == 0 || // PSP USA
+             memcmp(id, "NPUF", 4) == 0 || memcmp(id, "NPUG", 4) == 0 || // PSP USA
+             memcmp(id, "NPUH", 4) == 0 || memcmp(id, "NPUX", 4) == 0 || // PSP USA
+             memcmp(id, "NPUZ", 4) == 0 || // PSP USA
              memcmp(id, "NPNA", 4) == 0) { // PSM USA
         return "USA";
     }
