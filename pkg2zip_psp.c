@@ -326,6 +326,8 @@ static void init_psx_keys(uint8_t* iv, const uint8_t* mac, const uint8_t* header
     }
 
 }
+
+
 void unpack_psp_eboot(const char* path, const aes128_key* pkg_key, const uint8_t* pkg_iv, sys_file* pkg, uint64_t enc_offset, uint64_t item_offset, uint64_t item_size, int cso)
 {
     if (item_size < 0x28)

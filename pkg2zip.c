@@ -31,7 +31,7 @@ static const uint8_t pkg_vita_4[] = { 0xaf, 0x07, 0xfd, 0x59, 0x65, 0x25, 0x27, 
 
 // http://vitadevwiki.com/vita/System_File_Object_(SFO)_(PSF)#Internal_Structure
 // https://github.com/TheOfficialFloW/VitaShell/blob/1.74/sfo.h#L29
-static void parse_sfo_content(const uint8_t* sfo, uint32_t sfo_size, char* category, char* title, char* content, char* min_version, char* pkg_version)
+static void parse_sfo_content(const uint8_t* sfo, uint32_t sfo_size, char* category, char* title, char* content, char* min_version, char* pkg_version, char* discid)
 {
     if (get32le(sfo) != 0x46535000)
     {
@@ -47,6 +47,8 @@ static void parse_sfo_content(const uint8_t* sfo, uint32_t sfo_size, char* categ
     int category_index = -1;
     int minver_index = -1;
     int pkgver_index = -1;
+    int discid_index = -1;
+
     for (uint32_t i = 0; i < count; i++)
     {
         if (i * 16 + 20 + 2 > sfo_size)
@@ -82,38 +84,43 @@ static void parse_sfo_content(const uint8_t* sfo, uint32_t sfo_size, char* categ
         {
             pkgver_index = (int)i;
         }
+        else if (strcmp(key, "DISC_ID") == 0)
+        {
+            discid_index = (int)i;
+        }
     }
 
     if (title_index < 0)
     {
         sys_error("ERROR: cannot find title from sfo file, pkg is probably corrupted\n");
     }
-
     char* value = (char*)sfo + values + get32le(sfo + title_index * 16 + 20 + 12);
     size_t i;
     size_t max = 255;
-    for (i = 0; i<max && *value; i++, value++)
-    {
-        if ((*value >= 32 && *value < 127 && strchr("<>\"/\\|?*", *value) == NULL) || (uint8_t)*value >= 128)
+    
+    if(title) {
+        for (i = 0; i<max && *value; i++, value++)
         {
-            if (*value == ':')
+            if ((*value >= 32 && *value < 127 && strchr("<>\"/\\|?*", *value) == NULL) || (uint8_t)*value >= 128)
+            {
+                if (*value == ':')
+                {
+                    *title++ = ' ';
+                    *title++ = '-';
+                    max--;
+                }
+                else
+                {
+                    *title++ = *value;
+                }
+            }
+            else if (*value == 10)
             {
                 *title++ = ' ';
-                *title++ = '-';
-                max--;
-            }
-            else
-            {
-                *title++ = *value;
             }
         }
-        else if (*value == 10)
-        {
-            *title++ = ' ';
-        }
+        *title = 0;
     }
-    *title = 0;
-
     if (content_index >= 0 && content)
     {
         value = (char*)sfo + values + get32le(sfo + content_index * 16 + 20 + 12);
@@ -124,15 +131,24 @@ static void parse_sfo_content(const uint8_t* sfo, uint32_t sfo_size, char* categ
         *content = 0;
     }
 
-    if (category_index >= 0)
+    if (category_index >= 0 && category)
     {
         value = (char*)sfo + values + get32le(sfo + category_index * 16 + 20 + 12);
         while (*value)
         {
             *category++ = *value++;
         }
+        *category = 0;
     }
-    *category = 0;
+    
+    if(discid_index >= 0 && discid){
+        value = (char*)sfo + values + get32le(sfo + discid_index * 16 + 20 + 12);
+        while (*value)
+        {
+            *discid++ = *value++;
+        }
+        *discid = 0;
+    }
 
     if (minver_index >= 0 && min_version)
     {
@@ -170,7 +186,7 @@ static void parse_sfo_content(const uint8_t* sfo, uint32_t sfo_size, char* categ
     }
 }
 
-static void parse_sfo(sys_file f, uint64_t sfo_offset, uint32_t sfo_size, char* category, char* title, char* content, char* min_version, char* pkg_version)
+static void parse_sfo(sys_file f, uint64_t sfo_offset, uint32_t sfo_size, char* category, char* title, char* content, char* min_version, char* pkg_version, char* discid)
 {
     uint8_t sfo[16 * 1024];
     if (sfo_size < 16)
@@ -183,7 +199,7 @@ static void parse_sfo(sys_file f, uint64_t sfo_offset, uint32_t sfo_size, char* 
     }
     sys_read(f, sfo_offset, sfo, sfo_size);
 
-    parse_sfo_content(sfo, sfo_size, category, title, content, min_version, pkg_version);
+    parse_sfo_content(sfo, sfo_size, category, title, content, min_version, pkg_version, discid);
 }
 
 static void find_psp_sfo(const aes128_key* key, const aes128_key* ps3_key, const uint8_t* iv, sys_file pkg, uint64_t pkg_size, uint64_t enc_offset, uint64_t items_offset, uint32_t item_count, char* category, char* title)
@@ -232,9 +248,83 @@ static void find_psp_sfo(const aes128_key* key, const aes128_key* ps3_key, const
             sys_read(pkg, enc_offset + data_offset, sfo, (uint32_t)data_size);
             aes128_ctr_xor(item_key, iv, data_offset / 16, sfo, (uint32_t)data_size);
 
-            parse_sfo_content(sfo, (uint32_t)data_size, category, title, NULL, NULL, NULL);
+            parse_sfo_content(sfo, (uint32_t)data_size, category, title, NULL, NULL, NULL, NULL);
             return;
         }
+    }
+}
+
+static void find_pbp_sfo(const aes128_key* key, const aes128_key* ps3_key, const uint8_t* iv, sys_file pkg, uint64_t pkg_size, uint64_t enc_offset, uint64_t items_offset, uint32_t item_count, char* discid)
+{
+    memset(discid, 0x00, 0x10);
+    for (uint32_t item_index = 0; item_index < item_count; item_index++)
+    {
+        uint8_t item[32];
+        uint64_t item_offset = items_offset + item_index * 32;
+        sys_read(pkg, enc_offset + item_offset, item, sizeof(item));
+        aes128_ctr_xor(key, iv, item_offset / 16, item, sizeof(item));
+
+        uint32_t name_offset = get32be(item + 0);
+        uint32_t name_size = get32be(item + 4);
+        uint64_t data_offset = get64be(item + 8);
+        uint64_t data_size = get64be(item + 16);
+        uint8_t psp_type = item[24];
+
+        assert(name_offset % 16 == 0);
+        assert(data_offset % 16 == 0);
+
+        if (pkg_size < enc_offset + name_offset + name_size ||
+            pkg_size < enc_offset + data_offset + data_size)
+        {
+            sys_error("ERROR: pkg file is too short, possibly corrupted\n");
+        }
+
+        const aes128_key* item_key = psp_type == 0x90 ? key : ps3_key;
+
+        char name[ZIP_MAX_FILENAME];
+        sys_read(pkg, enc_offset + name_offset, name, name_size);
+        aes128_ctr_xor(item_key, iv, name_offset / 16, (uint8_t*)name, name_size);
+        name[name_size] = 0;
+        
+        if (strcmp(name, "USRDIR/CONTENT/EBOOT.PBP") == 0 || strcmp(name, "USRDIR/CONTENT/PBOOT.PBP") == 0 || strcmp(name, "USRDIR/CONTENT/PARAM.PBP") == 0)
+        {
+            uint8_t eboot_header[0x28];
+            uint8_t sfo[16 * 1024];
+            
+            sys_read(pkg, enc_offset + data_offset, eboot_header, sizeof(eboot_header));
+            aes128_ctr_xor(item_key, iv, data_offset / 16, eboot_header, sizeof(eboot_header));
+            if (data_size < 0x28)
+            {
+                sys_error("ERROR: eboot.pbp file is too small\n");
+            }
+            if (memcmp(eboot_header, "\x00PBP", 4) != 0)
+            {
+                sys_error("ERROR: wrong eboot.pbp header signature!\n");
+            }
+            
+            uint32_t sfo_offset = get32le(eboot_header + 0x8);
+            uint32_t icon0_offset = get32le(eboot_header + 0xC);
+            uint32_t sfo_size = (icon0_offset - sfo_offset);
+            
+            // get sfo header aligned to aes block size
+            uint32_t sfo_offset_aligned = (sfo_offset - (sfo_offset % 16));
+            uint32_t sfo_offset_off = sfo_offset % 16;
+
+            if (sfo_size < 16)
+            {
+                sys_error("ERROR: sfo information is too small\n");
+            }
+            if (sfo_size > sizeof(sfo))
+            {
+                sys_error("ERROR: sfo information is too big, pkg file is probably corrupted\n");
+            }
+
+            sys_read(pkg, enc_offset + data_offset + sfo_offset_aligned, sfo, sfo_size + sfo_offset_off);
+            aes128_ctr_xor(item_key, iv, (data_offset + sfo_offset_aligned) / 16, sfo, sfo_size + sfo_offset_off);
+
+            parse_sfo_content(sfo + sfo_offset_off, sfo_size, NULL, NULL, NULL, NULL, NULL, discid);
+            return;
+        }        
     }
 }
 
@@ -541,7 +631,7 @@ int main(int argc, char* argv[])
 
     aes128_key key;
     aes128_init(&key, main_key);
-
+    char discid[10];
     char content[256];
     char title[256];
     char category[256];
@@ -563,8 +653,14 @@ int main(int argc, char* argv[])
     else if (type == PKG_TYPE_PSP || type == PKG_TYPE_PSX)
     {
         find_psp_sfo(&key, &ps3_key, iv, pkg, pkg_size, enc_offset, items_offset, item_count, category, title);
-        id = (char*)pkg_header + 0x37;
-
+		
+        // read discid from PARAM.SFO in EBOOT.PBP
+        find_pbp_sfo(&key, &ps3_key, iv, pkg, pkg_size, enc_offset, items_offset, item_count, discid);
+		
+        id = discid;
+        if(strcmp(id, "") == 0)
+          id = (char*)pkg_header + 0x37;
+        
         if (type == PKG_TYPE_PSX && zrif_arg != NULL)  //pocketstation pkg type is PSX
         {
             rif_size = 512;
@@ -613,12 +709,12 @@ int main(int argc, char* argv[])
         }
         else if (type == PKG_TYPE_VITA_THEME)
         {
-            parse_sfo(pkg, sfo_offset, sfo_size, category, title, content, min_version, pkg_version);
+            parse_sfo(pkg, sfo_offset, sfo_size, category, title, content, min_version, pkg_version, NULL);
             rif_size = 512;
         }
         else // Vita APP, DLC or PATCH
         {
-            parse_sfo(pkg, sfo_offset, sfo_size, category, title, content, min_version, pkg_version);
+            parse_sfo(pkg, sfo_offset, sfo_size, category, title, content, min_version, pkg_version, NULL);
             rif_size = 512;
             
             if (type == PKG_TYPE_VITA_APP && strcmp(category, "gp") == 0)
@@ -1004,7 +1100,7 @@ int main(int argc, char* argv[])
                     if (!pbp || ddlc)
                     {
                         out_add_parent(path);
-                        unpack_psp_key(path, item_key, iv, pkg, enc_offset, data_offset, data_size);						
+                        unpack_psp_key(path, item_key, iv, pkg, enc_offset, data_offset, data_size);                        
                         continue;
                     }
                 }
