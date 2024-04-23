@@ -382,6 +382,8 @@ void print_help(char* bin_name)
     sys_output("-c[NUM]            Create a *.CSO file instead of ISO. [NUM] is the compression ratio\n");
     sys_output("-p|--psp           Extracts PSP files in their original EBOOT.PBP format\n");
     sys_output("-d|--decrypt       Always decrypt PSP DLC/EDAT files\n");
+    sys_output("PSM only options:\n");
+	sys_output("-a|--android-psm   Extract into PSM for Android format.\n");
     sys_output("\n");
     sys_output("Usage: %s [-x] [-c[N]] [-b] [-p] <file.pkg> [zRIF]\n", bin_name);
 }
@@ -409,6 +411,7 @@ int main(int argc, char* argv[])
     int pbp = 0;
     int ddlc = 0;
     int bgdl = 1;
+	int android = 0;
     const char* pkg_arg = NULL;
     const char* zrif_arg = NULL;
     for (int i = 1; i < argc; i++)
@@ -445,6 +448,10 @@ int main(int argc, char* argv[])
         else if (strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
         {
             verbose = 0;
+        }
+		else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--android-psm") == 0)
+        {
+            android = 1;
         }
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
         {
@@ -942,6 +949,20 @@ int main(int argc, char* argv[])
 
     sys_output_progress_init(pkg_size);
 
+	char rw_folder[1024];
+	char ro_folder[1024];
+
+	if(type == PKG_TYPE_VITA_PSM) {
+		if(android) {
+			snprintf(rw_folder, sizeof(rw_folder) - 1, "%s", root);
+			snprintf(ro_folder, sizeof(ro_folder) - 1, "%s", root);
+		}
+		else {
+			snprintf(rw_folder, sizeof(rw_folder) - 1, "%s/RW", root);
+			snprintf(ro_folder, sizeof(ro_folder) - 1, "%s/RO", root);
+		}			
+	}
+
     for (uint32_t item_index = 0; item_index < item_count; item_index++)
     {
         uint8_t item[32];
@@ -987,6 +1008,7 @@ int main(int argc, char* argv[])
 
         // sys_output("[%u/%u] %s\n", item_index + 1, item_count, name);
 
+		
         if (flags == 4 || flags == 18) // Directory
         {
             if (type == PKG_TYPE_VITA_PSM)
@@ -1001,7 +1023,7 @@ int main(int argc, char* argv[])
                     }
                     else
                     {
-                        snprintf(path, sizeof(path), "%s/RO/%s", root, name + 9);
+                        snprintf(path, sizeof(path), "%s/%s", ro_folder, name + 9);
                     }
                     out_add_folder(path);
                 }
@@ -1151,7 +1173,7 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                   snprintf(path, sizeof(path), "%s/RO/%s", root, name + 9);
+                   snprintf(path, sizeof(path), "%s/%s", ro_folder, name + 9);
                 }
             }
             else
@@ -1249,16 +1271,16 @@ int main(int argc, char* argv[])
         {
             if (verbose)
             {
-                sys_output("[*] creating RO/License\n");
+                sys_output("[*] creating %s/License\n", ro_folder);
             }
-            snprintf(path, sizeof(path), "%s/RO/License", root);
+            snprintf(path, sizeof(path), "%s/License", ro_folder);
             out_add_folder(path);
 
             if (verbose)
             {
-                sys_output("[*] creating RO/License/FAKE.rif\n");
+                sys_output("[*] creating %s/License/FAKE.rif\n", ro_folder);
             }
-            snprintf(path, sizeof(path), "%s/RO/License/FAKE.rif", root);
+            snprintf(path, sizeof(path), "%s/License/FAKE.rif", ro_folder);
         }
         else if (type == PKG_TYPE_PSX)
         {
@@ -1350,48 +1372,52 @@ int main(int argc, char* argv[])
 
     if (type == PKG_TYPE_VITA_PSM)
     {
+		
         if (verbose)
         {
-            sys_output("[*] creating RW\n");
+            sys_output("[*] creating %s\n", rw_folder);
         }
-        snprintf(path, sizeof(path), "%s/RW", root);
+        snprintf(path, sizeof(path), "%s", rw_folder);
         out_add_folder(path);
 
         if (verbose)
         {
-            sys_output("[*] creating RW/Documents\n");
+            sys_output("[*] creating %s/Documents\n", rw_folder);
         }
-        snprintf(path, sizeof(path), "%s/RW/Documents", root);
+        snprintf(path, sizeof(path), "%s/Documents", rw_folder);
         out_add_folder(path);
 
         if (verbose)
         {
-            sys_output("[*] creating RW/Temp\n");
+            sys_output("[*] creating %s/Temp\n", rw_folder);
         }
-        snprintf(path, sizeof(path), "%s/RW/Temp", root);
+        snprintf(path, sizeof(path), "%s/Temp", rw_folder);
         out_add_folder(path);
 
         if (verbose)
         {
-            sys_output("[*] creating RW/System\n");
+            sys_output("[*] creating %s/System\n", rw_folder);
         }
-        snprintf(path, sizeof(path), "%s/RW/System", root);
+        snprintf(path, sizeof(path), "%s/System", rw_folder);
         out_add_folder(path);
 
-        if (verbose)
-        {
-            sys_output("[*] creating RW/System/content_id\n");
-        }
-        snprintf(path, sizeof(path), "%s/RW/System/content_id", root);
-        out_begin_file(path, 0);
-        out_write(pkg_header + 0x30, 0x30);
-        out_end_file();
+		if(!android){
+			if (verbose)
+			{
+				sys_output("[*] creating %s/System/content_id\n", rw_folder);
+			}
+			
+			snprintf(path, sizeof(path), "%s/System/content_id", rw_folder);
+			out_begin_file(path, 0);
+			out_write(pkg_header + 0x30, 0x30);
+			out_end_file();			
+		}
 
         if (verbose)
         {
-            sys_output("[*] creating RW/System/pm.dat\n");
+            sys_output("[*] creating %s/System/pm.dat\n", rw_folder);
         }
-        snprintf(path, sizeof(path), "%s/RW/System/pm.dat", root);
+        snprintf(path, sizeof(path), "%s/System/pm.dat", rw_folder);
 
         uint8_t pm[1 << 16] = { 0 };
         out_begin_file(path, 0);
