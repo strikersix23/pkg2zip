@@ -20,7 +20,7 @@
 #define PKG_HEADER_SIZE 192
 #define PKG_HEADER_EXT_SIZE 64
 
-#define VER "2.5-alpha"
+#define VER "2.5"
 
 // https://wiki.henkaku.xyz/vita/Packages#AES_Keys
 static const uint8_t pkg_ps3_key[] = { 0x2e, 0x7b, 0x71, 0xd7, 0xc9, 0xc9, 0xa1, 0x4e, 0xa3, 0x22, 0x1f, 0x18, 0x88, 0x28, 0xb8, 0xf8 };
@@ -330,30 +330,36 @@ static void find_pbp_sfo(const aes128_key* key, const aes128_key* ps3_key, const
 
 static const char* get_region(const char* id) {
     if (memcmp(id, "NPEE", 4) == 0 || memcmp(id, "NPEF", 4) == 0 || // PS1 EUR
-        memcmp(id, "PCSB", 4) == 0 || memcmp(id, "PCSF", 4) == 0 || // PSV EUR
         memcmp(id, "UCES", 4) == 0 || memcmp(id, "ULES", 4) == 0 || // PSP EUR
+        memcmp(id, "NPEG", 4) == 0 || memcmp(id, "NPEH", 4) == 0 || // PSP EUR
+        memcmp(id, "NPEX", 4) == 0 || memcmp(id, "NPEZ", 4) == 0 || // PSP EUR
+        memcmp(id, "PCSB", 4) == 0 || memcmp(id, "PCSF", 4) == 0 || // PSV EUR
         memcmp(id, "NPOA", 4) == 0) { // PSM EUR
         return "EUR";
     }
     else if (memcmp(id, "NPHI", 4) == 0 || memcmp(id, "NPHJ", 4) == 0 || // PS1 ASA
-             memcmp(id, "PCSD", 4) == 0 || memcmp(id, "PCSH", 4) == 0 || // PSV ASA
              memcmp(id, "UCAS", 4) == 0 || memcmp(id, "ULAS", 4) == 0 || // PSP ASA
+             memcmp(id, "NPHG", 4) == 0 || memcmp(id, "NPHH", 4) == 0 || // PSP ASA
+             memcmp(id, "NPHZ", 4) == 0 || // PSP ASA
+             memcmp(id, "PCSD", 4) == 0 || memcmp(id, "PCSH", 4) == 0 || // PSV ASA
              memcmp(id, "NPQA", 4) == 0) { // PSM ASA
         return "ASA";
     }
     else if (memcmp(id, "NPJI", 4) == 0 || memcmp(id, "NPJJ", 4) == 0 || // PS1 JPN
-             memcmp(id, "PCSC", 4) == 0 || memcmp(id, "PCSG", 4) == 0 || // PSV JPN
              memcmp(id, "UCJM", 4) == 0 || memcmp(id, "ULJM", 4) == 0 || // PSP JPN
              memcmp(id, "UCJS", 4) == 0 || memcmp(id, "ULJS", 4) == 0 || // PSP JPN
-             memcmp(id, "UCJB", 4) == 0 || // PSP JPN
+             memcmp(id, "UCJB", 4) == 0 || memcmp(id, "NPJG", 4) == 0 || // PSP JPN
+             memcmp(id, "NPJH", 4) == 0 || // PSP JPN
+             memcmp(id, "PCSC", 4) == 0 || memcmp(id, "PCSG", 4) == 0 || // PSV JPN
              memcmp(id, "NPPA", 4) == 0) { // PSM JPN
         return "JPN";
     }
-    else if (memcmp(id, "NPUF", 4) == 0 || // PS1 USA
-             memcmp(id, "NPUI", 4) == 0 || memcmp(id, "NPUJ", 4) == 0 || // PS1 USA
-             memcmp(id, "PCSA", 4) == 0 || memcmp(id, "PCSE", 4) == 0 || // PSV USA
+    else if (memcmp(id, "NPUF", 4) == 0 || memcmp(id, "NPUI", 4) == 0 || // PS1 USA
+             memcmp(id, "NPUJ", 4) == 0 || // PS1 USA
              memcmp(id, "UCUS", 4) == 0 || memcmp(id, "ULUS", 4) == 0 || // PSP USA
-             memcmp(id, "NPUH", 4) == 0 || // PSP USA
+             memcmp(id, "NPUG", 4) == 0 || memcmp(id, "NPUH", 4) == 0 || // PSP USA
+             memcmp(id, "NPUX", 4) == 0 || memcmp(id, "NPUZ", 4) == 0 || // PSP USA
+             memcmp(id, "PCSA", 4) == 0 || memcmp(id, "PCSE", 4) == 0 || // PSV USA
              memcmp(id, "NPNA", 4) == 0) { // PSM USA
         return "USA";
     }
