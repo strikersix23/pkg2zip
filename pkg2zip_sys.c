@@ -271,7 +271,7 @@ void sys_write(sys_file file, uint64_t offset, const void* buffer, uint32_t size
 
 void sys_mkdir(const char* path)
 {
-    char* last = strrchr(strdup(path), '/');
+    char* last = strrchr((char*)path, '/');
     if (last)
     {
         *last = 0;
