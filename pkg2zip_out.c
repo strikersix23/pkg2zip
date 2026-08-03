@@ -40,7 +40,7 @@ void out_add_folder(const char* path)
 void out_add_parent(const char* path)
 {
     char parent[1024];
-    char* lastslash = strrchr(path, '/');
+    char* lastslash = strrchr(strdup(path), '/');
     if (lastslash != NULL)
     {
         snprintf(parent, strlen(path)-strlen(lastslash)+1, "%s", path);
