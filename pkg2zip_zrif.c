@@ -177,6 +177,9 @@ void zrif_decode(const char* str, uint8_t* rif, uint32_t rif_size)
 
 void rif_load(const char* str, uint8_t* rif, uint32_t rif_size) {
     FILE *file = fopen(str, "rb");
-    fread(rif, rif_size, 1, file);
+    size_t result = fread(rif, rif_size, 1, file);
+    if ( result != 1 ){
+        sys_error("ERROR: rif_load failed\n");
+    }
     fclose(file);
 }
