@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
+#include <stdbool.h>
 
 #if defined(_MSC_VER)
 #  define NORETURN __declspec(noreturn)
@@ -115,4 +117,13 @@ static inline void set64be(uint8_t* bytes, uint64_t x)
     bytes[5] = (uint8_t)(x >> 16);
     bytes[6] = (uint8_t)(x >> 8);
     bytes[7] = (uint8_t)x;
+}
+
+static inline bool str_endswith(const char* str, const char* suffix) {
+    const size_t suffix_len = strlen(suffix);
+    const size_t str_len = strlen(str);
+    if (str_len < suffix_len) return false;
+
+    const char *str_end = str + (str_len - suffix_len);
+    return strcmp(str_end, suffix) == 0;
 }

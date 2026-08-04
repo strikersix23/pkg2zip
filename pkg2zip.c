@@ -738,7 +738,11 @@ int main(int argc, char* argv[])
 
         if (type != PKG_TYPE_VITA_PATCH && zrif_arg != NULL)
         {
-            zrif_decode(zrif_arg, rif, rif_size);
+            if (str_endswith(zrif_arg, ".bin")) {
+                rif_load(zrif_arg, rif, rif_size);
+            } else {
+                zrif_decode(zrif_arg, rif, rif_size);
+            }
             const char* rif_contentid = (char*)rif + (type == PKG_TYPE_VITA_PSM ? 0x50 : 0x10);
             if (strncmp(rif_contentid, content, 0x30) != 0)
             {
