@@ -20,7 +20,7 @@
 #define PKG_HEADER_SIZE 192
 #define PKG_HEADER_EXT_SIZE 64
 
-#define VER "2.5"
+#define VER "2.6"
 
 // https://wiki.henkaku.xyz/vita/Packages#AES_Keys
 static const uint8_t pkg_ps3_key[] = { 0x2e, 0x7b, 0x71, 0xd7, 0xc9, 0xc9, 0xa1, 0x4e, 0xa3, 0x22, 0x1f, 0x18, 0x88, 0x28, 0xb8, 0xf8 };
@@ -738,7 +738,11 @@ int main(int argc, char* argv[])
 
         if (type != PKG_TYPE_VITA_PATCH && zrif_arg != NULL)
         {
-            zrif_decode(zrif_arg, rif, rif_size);
+            if (str_endswith(zrif_arg, ".bin")) {
+                rif_load(zrif_arg, rif, rif_size);
+            } else {
+                zrif_decode(zrif_arg, rif, rif_size);
+            }
             const char* rif_contentid = (char*)rif + (type == PKG_TYPE_VITA_PSM ? 0x50 : 0x10);
             if (strncmp(rif_contentid, content, 0x30) != 0)
             {
